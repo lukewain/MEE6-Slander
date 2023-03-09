@@ -1,5 +1,5 @@
-from _base import AutoBase
+from cogs.automatic.fileListener import FileWatcher
 
 
 async def setup(bot):
-    await bot.add_cog(AutoBase)
+    await bot.add_cog(FileWatcher(bot))
