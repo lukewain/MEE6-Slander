@@ -1,1 +1,1 @@
-[ ] - Create schema for each guild (postgres)
+- [ ] Create schema for each guild (postgres)
