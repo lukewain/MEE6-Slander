@@ -11,9 +11,11 @@ def debug(text: str, type: str = "WARN") -> None:
     with open(f"logs/debug.log", "a") as log:
         log.write(f"[{type}] {utcnow()} | {text}\n")
 
+
 def error(text: str) -> None:
     with open(f"logs/errors.log", "a") as log:
         log.write(f"[ERROR] {utcnow()} | {text}\n")
+
 
 async def get_total_member_count(guilds):
     g: Guild
@@ -27,25 +29,11 @@ async def get_total_member_count(guilds):
 
     return total_members
 
+
 async def parse_schema(schema_path: str, pool: Pool) -> bool:
     with open(schema_path) as schema_file:
-        data = schema_file.readlines()
+        data = schema_file.read()
 
     async with pool.acquire() as conn:
-        # Loop through schema lines
-        ret = []
-        for line in data:
-            ret.append(line)
-            if ';' in line:
-                query = ''.join(ret)
-                if query.strip():
-                    await conn.execute(query)
-                ret = []
-
-        if ret:
-                query = ''.join(ret)
-                if query.strip():
-                    await conn.execute(query)
-                await conn.commit()
-            
-    
+        query = "".join(data)
+        await conn.execute(query)
