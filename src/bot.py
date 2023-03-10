@@ -10,7 +10,6 @@ import asyncpg
 
 from json import load, dump
 
-from libs.Directory import Directory
 
 import utils
 
