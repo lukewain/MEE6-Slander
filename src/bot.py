@@ -35,8 +35,6 @@ class MEE6Slander(Bot):
 
         self.github: str = "https://github.com/MEE6-Slander"
 
-        self.dirList = []
-
         self.admins: list = []
 
         with open("./config/admin.json") as adminfile:
