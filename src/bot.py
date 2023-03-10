@@ -27,7 +27,7 @@ class MEE6Slander(Bot):
         allowed_mentions = AllowedMentions(everyone=False, users=False, roles=False)
 
         super().__init__(
-            command_prefix="sbeta.", intents=intents, allowed_mentions=allowed_mentions
+            command_prefix="s.", intents=intents, allowed_mentions=allowed_mentions
         )
 
         setup_logging(level=INFO)
