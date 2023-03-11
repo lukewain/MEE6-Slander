@@ -1,4 +1,4 @@
-from _base import Stats
+from ._base import Stats
 from discord.ext.commands import Context
 from discord.ext import commands
 
