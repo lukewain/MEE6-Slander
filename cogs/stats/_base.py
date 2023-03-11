@@ -16,4 +16,4 @@ class Stats(Cog):
         self.slanders_sent = 0
 
     async def cog_load(self):
-        self.start_time = utcnow().timestamp()
+        self.start_time = round(utcnow().timestamp())
