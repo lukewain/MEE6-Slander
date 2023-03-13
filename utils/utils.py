@@ -28,12 +28,3 @@ async def get_total_member_count(guilds):
                 total_members += 1
 
     return total_members
-
-
-async def parse_schema(schema_path: str, pool: Pool) -> bool:
-    with open(schema_path) as schema_file:
-        data = schema_file.read()
-
-    async with pool.acquire() as conn:
-        query = "".join(data)
-        await conn.execute(query)
