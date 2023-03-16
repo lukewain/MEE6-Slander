@@ -17,10 +17,3 @@ class ServerCommands(Admin):
 
         return await ctx.reply("This command is currently in development!.")
     
-    
-    ## Commands that are only for the owner
-    @commands.command()
-    @commands.is_owner()
-    @commands.dm_only()
-    async def panel(self, ctx: commands.Context):
-        return await ctx.reply("https://192.168.1.124:9090/")
