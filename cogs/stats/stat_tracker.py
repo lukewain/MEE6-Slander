@@ -12,9 +12,9 @@ class StatTracker(Stats):
         # Check if the message sent is a slander
 
         # Check if prefix is in message
-        prefixes = self.bot.get_prefix(message)
+        prefixes = await self.bot.get_prefix(message)
 
-        if (message.author.id == self.bot.user.id) and (len(prefixes) == 0):
+        if (message.author == self.bot.user) and (len(prefixes) == 0):
             self.slanders_sent += 1
 
     # Listen for message delete

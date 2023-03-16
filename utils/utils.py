@@ -30,7 +30,7 @@ async def get_total_member_count(guilds):
     return total_members
 
 
-async def parse_schema(schema_path: str, pool: Pool) -> bool:
+async def parse_schema(schema_path: str, pool: Pool):
     with open(schema_path) as schema_file:
         data = schema_file.read()
 
