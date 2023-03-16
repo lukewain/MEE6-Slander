@@ -65,7 +65,7 @@ class MEE6Embed(Embed):
         return embed
 
     @staticmethod
-    def mee6_not_found(owner: Member):
+    def mee6_not_found():
         embed = Embed(
             description="Woah, MEE6 isn't in your server\nThis means that I will not work correctly!\nPlease invite MEE6 using https://MEE6.xyz"
         )

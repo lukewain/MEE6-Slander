@@ -17,6 +17,6 @@ class StatsCommands(Stats):
                 self.servers_left,
                 self.slanders_sent,
                 self.start_time,
-                self.bot.user.avatar.url,
+                self.bot.user.display_avatar.url if self.bot.user else "",
             )
         )
