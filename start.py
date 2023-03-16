@@ -12,7 +12,7 @@ DSN = f"postgres://{os.environ['DBUSER']}:{os.environ['DBPASS']}@192.168.1.124/{
 
 
 async def run():
-    async with (asyncpg.pool.create_pool(DSN) as pool, MEE6Slander(pool=pool) as bot):
+    async with MEE6Slander(dsn=DSN) as bot:
         await bot.start(bot.token)
 
 
