@@ -8,11 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DSN = f"postgres://{os.environ['DBUSER']}:{os.environ['DBPASS']}@192.168.1.124/{os.environ['DBNAME']}"
 
 
 async def run():
-    async with MEE6Slander(dsn=DSN) as bot:
+    async with MEE6Slander(dsn=os.environ['PG_DSN']) as bot:
         await bot.start(bot.token)
 
 

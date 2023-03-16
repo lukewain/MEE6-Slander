@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 CREATE TABLE IF NOT EXISTS slanders (
-    id SERIAL PRIMARY KEY,
-    msg TEXT,
-    creator BIGINT
+    id SERIAL,
+    msg TEXT PRIMARY KEY,
+    creator BIGINT,
+    nsfw BOOLEAN DEFAULT TRUE,
+    approved BOOLEAN DEFAULT FALSE
 );
