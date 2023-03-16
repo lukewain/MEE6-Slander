@@ -15,5 +15,5 @@ class ServerCommands(Admin):
         except commands.errors.CommandInvokeError:
             return await ctx.author.send(embed=utils.embeds.MEE6Embed.error("Whoops", "That server does not exist"))
 
-        return await ctx.reply("This command is currently in development!.")
+        # TODO: Fetch info about the server and format into an embed
     

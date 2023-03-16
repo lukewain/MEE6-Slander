@@ -10,3 +10,9 @@ CREATE TABLE IF NOT EXISTS admins (
     add_others BOOLEAN,
     added_by BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS slanders (
+    id SERIAL PRIMARY KEY,
+    msg TEXT,
+    creator BIGINT
+);

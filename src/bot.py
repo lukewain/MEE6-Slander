@@ -17,7 +17,7 @@ load_dotenv()
 
 
 class MEE6Slander(Bot):
-    def __init__(self, *, pool: asyncpg.pool.Pool):
+    def __init__(self, *, dsn: str):
         # Define the bot's intents
         intents = Intents().default()
         intents.message_content = True
@@ -44,8 +44,9 @@ class MEE6Slander(Bot):
             if a not in self.admins:
                 self.admins.append(a)
 
-        # Create the asyncpg pool connection
-        self.pool: asyncpg.pool.Pool = pool
+        # Register postgres dsn 
+        self.dsn: str = dsn
+        self.default_timeout: int = 300
 
     async def setup_hook(self) -> None:
         await self.load_extension("jishaku")
@@ -55,7 +56,8 @@ class MEE6Slander(Bot):
             data = load(f)
             self.total = data["total"]
 
-        await utils.parse_schema("./src/schema.sql", self.pool)
+        conn = await asyncpg.connection.connect(dsn=self.dsn)
+        await conn.execute("".join(open("./src/schema.sql").read()))
         utils.log("Schem successfully uploaded")
 
     async def on_ready(self) -> None:

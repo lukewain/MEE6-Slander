@@ -6,6 +6,8 @@ class Admin(commands.Cog):
 
     async def cog_check(self, ctx: commands.Context):
         """Check if the user is an admin"""
+
+        # TODO: Fetch all the admins from the admin db
         if ctx.author.id not in self.bot.admins:
             return False
         else:
