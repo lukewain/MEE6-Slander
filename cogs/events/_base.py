@@ -1,7 +1,8 @@
-from discord.ext.commands import Cog, Bot
+from discord.ext.commands import Cog
 from discord import Game, Status
 from json import load, dump
 import utils
+from src.bot import MEE6Slander as Bot
 
 
 class Events(Cog):
@@ -21,7 +22,6 @@ class Events(Cog):
                 status=Status.online,
                 activity=Game(name=f"Slandered MEE6 {total['total']} times!"),
             )
-        
+
         with open("./total_slander.json", "w") as totalslander:
             dump(total, totalslander)
-        
