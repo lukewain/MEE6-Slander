@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS guilds (
     id BIGINT PRIMARY KEY,
     added BIGINT,
-    last_slander TEXT
+    nsfw BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS admins (
@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS admins (
 
 CREATE TABLE IF NOT EXISTS slanders (
     id SERIAL,
-    msg TEXT PRIMARY KEY,
-    creator BIGINT,
-    nsfw BOOLEAN DEFAULT TRUE,
-    approved BOOLEAN DEFAULT FALSE
+    message TEXT PRIMARY KEY,
+    creator BIGINT NOT NULL,
+    nsfw BOOLEAN NOT NULL DEFAULT TRUE,
+    approved BOOLEAN -- approved: True = approved, False = denied, Null = awaiting approval
 );
