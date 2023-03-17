@@ -7,7 +7,7 @@ from __future__ import annotations
 import collections
 import logging
 import random
-from typing import Deque, Dict, Tuple, Set, TypeAlias
+from typing import Deque, Dict, Tuple, Set, TypeAlias, NamedTuple
 
 import asyncpg
 import discord
@@ -40,6 +40,12 @@ class PGSafeDict(dict):
 
     def __getitem__(self, __key: str):
         return f"${list(self.keys()).index(__key) + 1}"
+
+
+class GuildConfig(NamedTuple):
+    """Container to access settings for a guild."""
+
+    nsfw: bool
 
 
 class SlanderManagerError(Exception):
@@ -316,7 +322,8 @@ class SlanderManager:
 
     def get_slander(self, guild: discord.Guild) -> str:
         """
-        Gets a slander for the guild.
+        Gets a slander from the guild's queue. If there's no queue or if it
+        has been exhausted, it creates a new randomly shuffled queue.
 
         Parameter
         ---------
@@ -329,16 +336,58 @@ class SlanderManager:
             A slander slander that's not been used before.
         """
         try:
-            slander_id = self._slander_queues[guild.id].popleft()
+            slander_id = self._slander_queues[guild.id].pop()
         except (KeyError, IndexError):
             # The queue was exhausted or non-existent, so we need to create a new shuffled one.
-            slanders = list(self._all_slanders.keys())
+            if guild.id in self._nsfw_guilds:
+                slanders = list(self._all_slanders.keys())
+            else:
+                slanders = list(self._safe_slanders.keys())
             random.shuffle(slanders)
 
             *slanders, slander_id = slanders
             self._slander_queues[guild.id] = collections.deque(slanders)
 
         return self._all_slanders[slander_id]
+
+    def get_guild_config(self, guild: discord.Guild) -> GuildConfig:
+        """Gets the current settings for this guild.
+
+        Parameters
+        ----------
+        guild: discord.Guild
+            The guild to get the config for.
+
+        Returns
+        -------
+        GuildConfig
+            The current settings for this guild.
+        """
+        return GuildConfig(
+            nsfw=guild.id in self._nsfw_guilds,
+        )
+
+    async def update_guild(self, guild: discord.Guild, /, *, nsfw: bool):
+        """
+        Updates the settings of a guild.
+
+        Parameters
+        ----------
+        guild: discord.Guild
+            The guild to update.
+        nsfw: bool
+            Wether this guild should allow NSFW slanders.
+        """
+        # Note, if this requires multiple params, do something like in `self.update_slander`
+        query: str = """
+            INSERT INTO guilds (id, nsfw) VALUES ($1, $2)
+                ON CONFLICT (id) DO UPDATE SET nsfw = $2
+        """
+        await self._pool.execute(query, guild.id, nsfw)
+        if nsfw:
+            self._nsfw_guilds.add(guild.id)
+        else:
+            self._nsfw_guilds.discard(guild.id)
 
     def __repr__(self) -> str:
         cls = type(self)
