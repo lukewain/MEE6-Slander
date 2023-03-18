@@ -263,7 +263,7 @@ class SlanderManager:
             Wether the slander was successfully updated. If false, it means the slander
             was not found in the database, or no keyword-arguments were given.
         """
-        asyncpg.create_pool
+        
         if approved is MISSING and nsfw is MISSING:
             return False
 
