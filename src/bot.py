@@ -55,7 +55,7 @@ class MEE6Slander(Bot):
         self._log_webhook: discord.Webhook = discord.Webhook.from_url(url=os.environ['WEBHOOK_URL'], session=self._session, bot_token=self.token)
 
     async def create_tables(self):
-        self.total = await self.pool.execute("SELECT count(*) FROM slander_log")
+        self.total = await self.pool.fetchval("SELECT count(*) FROM slander_log")
 
         with open("./src/schema.sql") as file:
             await self.pool.execute(file.read())
