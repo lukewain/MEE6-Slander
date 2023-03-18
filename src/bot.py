@@ -47,6 +47,7 @@ class MEE6Slander(Bot):
     async def setup_hook(self) -> None:
         await self.load_extension("jishaku")
         await self.load_extension("cogs.events")
+        await self.load_extension("cogs.config")
 
     async def create_tables(self):
         with open("total_slander.json") as f:
