@@ -143,9 +143,9 @@ class QueueView(discord.ui.View):
 
 class SlanderManager:
     def __init__(self, pool: asyncpg.Pool[asyncpg.Record], queue_channel_id: int, anyone_can_click: bool) -> None:
-        self._pool = pool
-        self._channel_id = queue_channel_id
-        self._no_view_check = anyone_can_click
+        self._pool: asyncpg.Pool[asyncpg.Record] = pool
+        self._channel_id: int = queue_channel_id
+        self._no_view_check: bool = anyone_can_click
 
         self._safe_slanders: Dict[SlanderID, str] = {}
         self._all_slanders: Dict[SlanderID, str] = {}
@@ -168,11 +168,11 @@ class SlanderManager:
     async def start(self):
         """Caches all the slanders."""
         query: str = "SELECT id, message FROM slanders WHERE approved = TRUE;"
-        slanders = await self._pool.fetch(query)
+        slanders: list[asyncpg.Record] = await self._pool.fetch(query)
         self._all_slanders = dict(slanders)  # type: ignore  # Yes you can be dict()'d.
 
         query: str = "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE;"
-        safe_slanders = await self._pool.fetch(query)
+        safe_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
         self._safe_slanders = dict(safe_slanders)  # type: ignore  # Yes you can be dict()'d.
         self.started = True
 
