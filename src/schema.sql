@@ -25,5 +25,5 @@ CREATE TABLE IF NOT EXISTS slander_log (
     message TEXT,
     gid BIGINT,
     cid BIGINT,
-    sent BIGINT, --timestamp
+    sent BIGINT --timestamp
 );
