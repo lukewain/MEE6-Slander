@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 
 from discord.ext.commands import Bot
 from discord import Intents, AllowedMentions, Status, Game
@@ -19,7 +20,7 @@ setup_logging()
 
 
 class MEE6Slander(Bot):
-    def __init__(self, *, pool: asyncpg.Pool[asyncpg.Record], slander_manager: utils.SlanderManager):
+    def __init__(self, *, pool: asyncpg.Pool[asyncpg.Record], slander_manager: utils.SlanderManager, dev_mode: bool):
         # Define the bot's intents
         intents = Intents().default()
         intents.message_content = True
@@ -29,21 +30,16 @@ class MEE6Slander(Bot):
 
         super().__init__(command_prefix="s.", intents=intents, allowed_mentions=allowed_mentions, tree_cls=SlanderTree)
 
-        self.token = environ["TOKEN"]
+        self.dev_mode = dev_mode
+        self.token = environ["TOKEN"] if not dev_mode else environ['DEV_TOKEN']
 
-        self.github: str = "https://github.com/MEE6-Slander"
+        self.github: str = "https://github.com/lukewain/MEE6-Slander"
 
-        self.admins: list = []
+        self.support_link: str = "https://discord.gg/EQpxMZSFy3"
+        self.show_support_link = os.environ["SHOW_SUPPORT_LINK"]
 
         self.pool = pool
         self.slander_manager = slander_manager
-
-        with open("./config/admin.json") as adminfile:
-            t = load(adminfile)
-
-        for a in t["admins"]:
-            if a not in self.admins:
-                self.admins.append(a)
 
     async def setup_hook(self) -> None:
         await self.load_extension("jishaku")
