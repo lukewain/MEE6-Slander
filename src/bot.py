@@ -40,7 +40,7 @@ class MEE6Slander(Bot):
         self.github: str = "https://github.com/lukewain/MEE6-Slander"
 
         self.support_link: str = "https://discord.gg/EQpxMZSFy3"
-        self.show_support_link: str = os.environ["SHOW_SUPPORT_LINK"]
+        self.show_support_link: bool = os.environ["SHOW_SUPPORT_LINK"] == "True"
 
         self.pool: asyncpg.Pool[asyncpg.Record] = pool
         self.slander_manager: utils.SlanderManager = slander_manager
@@ -55,9 +55,7 @@ class MEE6Slander(Bot):
         self._log_webhook: discord.Webhook = discord.Webhook.from_url(url=os.environ['WEBHOOK_URL'], session=self._session, bot_token=self.token)
 
     async def create_tables(self):
-        with open("total_slander.json") as f:
-            data = load(f)
-            self.total = data["total"]
+        self.total = await self.pool.execute("SELECT count(*) FROM slander_log")
 
         with open("./src/schema.sql") as file:
             await self.pool.execute(file.read())
