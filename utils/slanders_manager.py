@@ -14,7 +14,7 @@ import discord
 from discord.ext import commands
 from discord.utils import MISSING
 
-__all__: Tuple[str, ...] = ("SlanderManager",)
+__all__: Tuple[str, ...] = ("SlanderManager", "SlanderManagerError", "NoSlanderQueue", "SlanderAlreadyExists")
 
 GuildID: TypeAlias = int
 SlanderID: TypeAlias = int
@@ -215,6 +215,8 @@ class SlanderManager:
         ------
         NoSlanderQueue
             The queue channel was not found.
+        SlanderAlreadyExists
+            There was already a slander with this name.
         """
         async with self._pool.acquire() as conn, conn.transaction():
             channel = bot.get_channel(self._channel_id)
