@@ -8,4 +8,4 @@ class Config(SlanderSettings):
 
 
 async def setup(bot: MEE6Slander):
-    await bot.add_cog(Config())
+    await bot.add_cog(Config(bot))
