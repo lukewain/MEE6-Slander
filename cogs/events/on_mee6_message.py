@@ -1,4 +1,6 @@
 import discord
+
+import utils
 from ._base import Events
 from discord.ext.commands import Cog
 from discord.utils import utcnow
@@ -17,6 +19,7 @@ class MEE6Message(Events):
         slander = self.bot.slander_manager.get_slander(message.guild)
         await message.reply(content=slander)
         if self.bot.show_support_link and randint(0, 100) < 10:
+            utils.log("Notified about support server", "WARN")
             await message.channel.send(embed=discord.Embed(title="Support Server", description=f"MEE6 Slander support server is now live. Join [here] ({self.bot.support_link})"))
         await self.increment_status(message, slander)
 
