@@ -6,6 +6,9 @@ from discord import Guild, abc
 class ServerJoinLeave(Events):
     @Cog.listener()
     async def on_guild_join(self, guild: Guild):
+        ## Add guild to database
+        await self.bot.pool.execute("INSERT INTO guilds (id, added) VALUES ($1, $2)", guild.id, guild.me.joined_at)
+
         ## Check if MEE6 is in the server
         ## Collate a list of bot ids found in the server
         has_mee6 = guild.get_member(constants.MEE6_ID) is not None
@@ -30,6 +33,9 @@ class ServerJoinLeave(Events):
 
     @Cog.listener()
     async def on_guild_remove(self, guild: Guild):
+        # Remove joined at
+        await self.bot.pool.execute("UPDATE guilds SET added=$1 WHERE id=$2", None, guild.id)
+
         total_members = await utils.get_total_member_count(self.bot.guilds)
         channel = await self.bot.fetch_channel(constants.LOG_CHANNEL)
 
