@@ -1,5 +1,7 @@
 # Mee6 Slander
 
+## Support Server
+- https://discord.gg/EQpxMZSFy3
 TODO: add description
 
 ## Features
