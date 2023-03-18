@@ -12,6 +12,7 @@ from json import load
 
 
 import utils
+from .tree import SlanderTree
 
 load_dotenv()
 setup_logging()
@@ -26,7 +27,7 @@ class MEE6Slander(Bot):
 
         allowed_mentions = AllowedMentions(everyone=False, users=False, roles=False)
 
-        super().__init__(command_prefix="s.", intents=intents, allowed_mentions=allowed_mentions)
+        super().__init__(command_prefix="s.", intents=intents, allowed_mentions=allowed_mentions, tree_cls=SlanderTree)
 
         self.token = environ["TOKEN"]
 
