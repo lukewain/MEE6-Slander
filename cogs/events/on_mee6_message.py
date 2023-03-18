@@ -1,8 +1,11 @@
+import discord
 from ._base import Events
 from discord.ext.commands import Cog
 from discord.utils import utcnow
 from utils import constants
 from discord import Message, Embed, Colour, abc
+
+from random import randint
 
 
 class MEE6Message(Events):
@@ -13,6 +16,8 @@ class MEE6Message(Events):
 
         slander = self.bot.slander_manager.get_slander(message.guild)
         await message.reply(content=slander)
+        if self.bot.show_support_link and randint(0, 100) < 10:
+            await message.channel.send(embed=discord.Embed(title="Support Server", description=f"MEE6 Slander support server is now live. Join [here] ({self.bot.support_link})"))
         await self.increment_status(message, slander)
 
         log_channel = self.bot.get_channel(constants.SLANDER_LOG_CHANNEL)
