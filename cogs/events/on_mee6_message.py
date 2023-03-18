@@ -13,7 +13,7 @@ class MEE6Message(Events):
 
         slander = self.bot.slander_manager.get_slander(message.guild)
         await message.reply(content=slander)
-        await self.increment_status()
+        await self.increment_status(message, slander)
 
         log_channel = self.bot.get_channel(constants.SLANDER_LOG_CHANNEL)
 

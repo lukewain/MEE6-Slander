@@ -1,5 +1,5 @@
 from discord.ext.commands import Cog
-from discord import Game, Status
+import discord
 from json import load, dump
 import utils
 from src.bot import MEE6Slander as Bot
@@ -14,14 +14,16 @@ class Events(Cog):
 
         self.status_int: int = 0
 
-    async def increment_status(self):
-        with open("./total_slander.json", "r") as totalslander:
-            total = load(totalslander)
-            total["total"] += 1
-            await self.bot.change_presence(
-                status=Status.online,
-                activity=Game(name=f"Slandered MEE6 {total['total']} times!"),
-            )
+    async def increment_status(self, message: discord.Message, slander: str):
+        insert = await self.bot.pool.execute("INSERT INTO slander_log (message, gid, cid, sent) VALUES ($1, $2, $3, $4)", slander, message.guild.id, message.channel.id, discord.utils.utcnow().timestamp()) # type: ignore
 
-        with open("./total_slander.json", "w") as totalslander:
-            dump(total, totalslander)
+        if not insert:
+            return await self.bot._log_webhook.send(content="Something went wrong tracking the slander")
+
+        total = await self.bot.pool.execute("SELECT count(*) FROM slander_log")
+        
+        if total % 5 == 0:
+            await self.bot.change_presence(
+                    status=discord.Status.online,
+                    activity=discord.Game(name=f"Slandered MEE6 {total} times!"),
+                )
