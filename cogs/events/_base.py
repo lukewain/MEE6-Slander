@@ -20,7 +20,7 @@ class Events(Cog):
         if not insert:
             return await self.bot._log_webhook.send(content="Something went wrong tracking the slander")
 
-        total = await self.bot.pool.execute("SELECT count(*) FROM slander_log")
+        total = await self.bot.pool.fetchval("SELECT count(*) FROM slander_log")
         
         if total % 5 == 0:
             await self.bot.change_presence(
