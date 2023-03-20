@@ -13,6 +13,15 @@ class Suggestions(commands.Cog):
     async def cog_load(self):
         self.slander_request_update.start()
 
+    async def interaction_check(self, interaction: discord.Interaction[MEE6Slander]):
+        # Check if the user is in the blacklist db
+        res: asyncpg.Record | None = await interaction.client.pool.fetchrow("SELECT * FROM blacklist WHERE id=$1", interaction.user.id)
+
+        if not res:
+            return True
+        
+        return await interaction.response.send_message(embed=discord.Embed(title="Whoops", description="You do not have permission to do that!"))
+
     @app_commands.command(name='suggest')
     async def suggest_slander(
         self,
