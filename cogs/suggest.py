@@ -72,7 +72,7 @@ class Suggestions(commands.Cog):
                     await self.bot._log_webhook.send(embed=discord.Embed(title="User DM Error", description=e, colour=discord.Colour.red()))
 
             # Update the record to say that the user has been notified
-            query: str = "UPDATE slander SET notified=True WHERE id=$1"
+            query: str = "UPDATE slanders SET notified=True WHERE id=$1"
 
             await self.bot.pool.execute(query, record['id'])
 
