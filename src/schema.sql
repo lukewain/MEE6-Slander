@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS slander_log (
     cid BIGINT,
     sent BIGINT --timestamp
 );
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    id BIGINT PRIMARY KEY,
+    added_by BIGINT,
+    reason TEXT NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT NULL -- Optional kwarg that would only blacklist the user for a specific amount of time
+);
