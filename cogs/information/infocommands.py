@@ -10,7 +10,7 @@ import time
 from src.bot import MEE6Slander
 
 class InfoCommands(Information):
-    @commands.hybrid_command(name="upime", aliases=["up", "ut"])
+    @commands.hybrid_command(name="uptime", aliases=["up", "ut"])
     async def uptime(self, ctx: commands.Context[MEE6Slander]):
         """Show the user the uptime of the bot"""
         online_since: int = ctx.bot.start_time
