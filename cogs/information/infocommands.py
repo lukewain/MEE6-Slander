@@ -1,6 +1,5 @@
 import datetime
-from pydoc import describe
-from _base import Information
+from ._base import Information
 
 import discord
 from discord.ext import commands
