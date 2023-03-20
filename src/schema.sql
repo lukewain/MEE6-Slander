@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS slanders (
     message TEXT PRIMARY KEY,
     creator BIGINT NOT NULL,
     nsfw BOOLEAN NOT NULL DEFAULT TRUE,
-    approved BOOLEAN -- approved: True = approved, False = denied, Null = awaiting approval
+    approved BOOLEAN, -- approved: True = approved, False = denied, Null = awaiting approval
+    notified BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS slander_log (
