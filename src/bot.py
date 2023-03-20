@@ -9,6 +9,7 @@ from discord.utils import setup_logging
 
 from os import environ
 from dotenv import load_dotenv
+import time
 import asyncpg
 
 from json import load
@@ -45,6 +46,8 @@ class MEE6Slander(Bot):
         self.pool: asyncpg.Pool[asyncpg.Record] = pool
         self.slander_manager: utils.SlanderManager = slander_manager
         self._session: aiohttp.ClientSession = aiosession
+
+        self.start_time: int = round(time.time())
 
     async def setup_hook(self) -> None:
         await self.load_extension("jishaku")
