@@ -13,8 +13,9 @@ class MemberJoinLeave(Events):
 
         await channel.send(
             embed=discord.Embed(title="Member Joined!", colour=discord.Colour.green())
-            .add_field(name="Server Name", value=member.guild.name)
-            .add_field(name="Member ID", value=member.id)
+            .add_field(name="User Name", value=member, inline=False)
+            .add_field(name="Server Name", value=member.guild.name, inline=False)
+            .add_field(name="Member ID", value=member.id, inline=False)
         )
 
     @Cog.listener()
@@ -23,6 +24,7 @@ class MemberJoinLeave(Events):
 
         await channel.send(
             embed=discord.Embed(title="Member Left!", colour=discord.Colour.red())
-            .add_field(name="Server Name", value=member.guild.name)
-            .add_field(name="Member ID", value=member.id)
+            .add_field(name="User Name", value=member, inline=False)
+            .add_field(name="Server Name", value=member.guild.name, inline=False)
+            .add_field(name="Member ID", value=member.id, inline=False)
         )
