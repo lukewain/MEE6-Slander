@@ -19,7 +19,7 @@ class MemberJoinLeave(Events):
         )
 
     @Cog.listener()
-    async def on_member_leave(self, member: discord.Member):
+    async def on_member_remove(self, member: discord.Member):
         channel: discord.TextChannel = await self.bot.fetch_channel(utils.constants.LEAVE_LOG_CHANNEL)  # type: ignore
 
         await channel.send(
