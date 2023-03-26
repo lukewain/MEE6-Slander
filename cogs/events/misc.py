@@ -20,7 +20,7 @@ class MemberJoinLeave(Events):
 
     @Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        channel: discord.TextChannel = await self.bot.fetch_channel(utils.constants.LEAVE_LOG_CHANNEL)  # type: ignore
+        channel: discord.TextChannel = await self.bot.fetch_channel(utils.constants.JOIN_LEAVE_LOG_CHANNEL)  # type: ignore
 
         await channel.send(
             embed=discord.Embed(title="Member Left!", colour=discord.Colour.red())
