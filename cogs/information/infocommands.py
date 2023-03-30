@@ -23,7 +23,9 @@ class InfoCommands(Information):
 
         embed = discord.Embed(title="Uptime", colour=discord.Colour.blue())
 
-        embed.add_field(name="Online Since", value=f"<t:{online_since}:F", inline=False)
+        embed.add_field(
+            name="Online Since", value=f"<t:{online_since}:F>", inline=False
+        )
         embed.add_field(name="Online For", value=datetime.timedelta(seconds=online_for))
 
         await ctx.send(embed=embed)
