@@ -73,7 +73,11 @@ class MEE6Slander(Bot):
 
     async def create_tables(self):
         self.total = await self.pool.fetchval("SELECT count(*) FROM slander_log")
-        self.total = self.total % 5
+        for i in range(self.total):
+            if self.total % 5 == 0:
+                break
+            else:
+                self.total -= 1
 
         with open("./src/schema.sql") as file:
             await self.pool.execute(file.read())
