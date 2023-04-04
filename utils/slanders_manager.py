@@ -14,12 +14,17 @@ import discord
 from discord.ext import commands
 from discord.utils import MISSING
 
-__all__: Tuple[str, ...] = ("SlanderManager", "SlanderManagerError", "NoSlanderQueue", "SlanderAlreadyExists")
+__all__: Tuple[str, ...] = (
+    "SlanderManager",
+    "SlanderManagerError",
+    "NoSlanderQueue",
+    "SlanderAlreadyExists",
+)
 
 GuildID: TypeAlias = int
 SlanderID: TypeAlias = int
 
-log = logging.getLogger('SlanderManager')
+log = logging.getLogger("SlanderManager")
 
 
 class PGSafeDict(dict):
@@ -68,81 +73,143 @@ class QueueView(discord.ui.View):
         self.manager = manager
         self.slander_id = slander_id
         self.approve.custom_id = str(self.approve.custom_id).format(slander_id)
-        self.approve_nsfw.custom_id = str(self.approve_nsfw.custom_id).format(slander_id)
+        self.approve_nsfw.custom_id = str(self.approve_nsfw.custom_id).format(
+            slander_id
+        )
         self.reject.custom_id = str(self.reject.custom_id).format(slander_id)
 
-    async def interaction_check(self, interaction: discord.Interaction[commands.Bot], /) -> bool:
+    async def interaction_check(
+        self, interaction: discord.Interaction[commands.Bot], /
+    ) -> bool:
         if self.manager._no_view_check:
             return True
         if await interaction.client.is_owner(interaction.user):
             return True
-        await interaction.response.send_message('You cannot do that.', ephemeral=True)
+        await interaction.response.send_message("You cannot do that.", ephemeral=True)
         return False
 
-    @discord.ui.button(label='approve', custom_id='Slanders::approve::{}', style=discord.ButtonStyle.green)
-    async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def send_notification(self, interaction: discord.Interaction, slander_id):
+        # Fetch slander content
+        res: asyncpg.Record = await interaction.client.pool.fetchrow("SELECT * FROM slanders WHERE id=$1", slander_id)  # type: ignore
+
+        embed = discord.Embed(description=res["message"])
+        if res["nsfw"] and res["approved"]:
+            embed.title = "Slander Accepted (NSFW)"
+            embed.color = discord.Colour.orange()
+        elif res["approved"]:
+            embed.title = "Slander Accepted"
+            embed.color = discord.Colour.green()
+        else:
+            embed.title = "Slander Denied"
+            embed.color = discord.Colour.red()
+
+        # Fetch the user
+        creator_obj: discord.User = await interaction.client.fetch_user(res["creator"])
+
+        await creator_obj.send(embed=embed)
+
+    @discord.ui.button(
+        label="approve",
+        custom_id="Slanders::approve::{}",
+        style=discord.ButtonStyle.green,
+    )
+    async def approve(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if not interaction.message:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message` was `None`', ephemeral=True
+                "Something went wrong... `Interaction.message` was `None`",
+                ephemeral=True,
             )
         if not interaction.message.embeds:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message.embeds` was empty.', ephemeral=True
+                "Something went wrong... `Interaction.message.embeds` was empty.",
+                ephemeral=True,
             )
-        success = await self.manager.update_slander(self.slander_id, approved=True, nsfw=False)
+        success = await self.manager.update_slander(
+            self.slander_id, approved=True, nsfw=False
+        )
         if not success:
-            return await interaction.response.send_message("Failed to update this slander. Was it deleted?", ephemeral=True)
+            return await interaction.response.send_message(
+                "Failed to update this slander. Was it deleted?", ephemeral=True
+            )
 
         embed = interaction.message.embeds[0]
-        embed.set_footer(text='Slander approved.')
+        embed.set_footer(text="Slander approved.")
         embed.colour = discord.Colour.green()
         await interaction.response.edit_message(embed=embed, view=None)
+        await self.send_notification(interaction, self.slander_id)
         self.stop()
 
-    @discord.ui.button(label='approve (nsfw)', custom_id='Slanders::nsfw::{}', style=discord.ButtonStyle.blurple)
-    async def approve_nsfw(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(
+        label="approve (nsfw)",
+        custom_id="Slanders::nsfw::{}",
+        style=discord.ButtonStyle.blurple,
+    )
+    async def approve_nsfw(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if not interaction.message:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message` was `None`', ephemeral=True
+                "Something went wrong... `Interaction.message` was `None`",
+                ephemeral=True,
             )
         if not interaction.message.embeds:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message.embeds` was empty.', ephemeral=True
+                "Something went wrong... `Interaction.message.embeds` was empty.",
+                ephemeral=True,
             )
-        success = await self.manager.update_slander(self.slander_id, approved=True, nsfw=True)
+        success = await self.manager.update_slander(
+            self.slander_id, approved=True, nsfw=True
+        )
         if not success:
-            return await interaction.response.send_message("Failed to update this slander. Was it deleted?", ephemeral=True)
+            return await interaction.response.send_message(
+                "Failed to update this slander. Was it deleted?", ephemeral=True
+            )
 
         embed = interaction.message.embeds[0]
-        embed.set_footer(text='Slander approved as NSFW.')
+        embed.set_footer(text="Slander approved as NSFW.")
         embed.colour = discord.Colour.dark_green()
         await interaction.response.edit_message(embed=embed, view=None)
+        await self.send_notification(interaction, self.slander_id)
         self.stop()
 
-    @discord.ui.button(label='deny', custom_id='Slanders::reject::{}', style=discord.ButtonStyle.red)
+    @discord.ui.button(
+        label="deny", custom_id="Slanders::reject::{}", style=discord.ButtonStyle.red
+    )
     async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.message:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message` was `None`', ephemeral=True
+                "Something went wrong... `Interaction.message` was `None`",
+                ephemeral=True,
             )
         if not interaction.message.embeds:
             return await interaction.response.send_message(
-                'Something went wrong... `Interaction.message.embeds` was empty.', ephemeral=True
+                "Something went wrong... `Interaction.message.embeds` was empty.",
+                ephemeral=True,
             )
 
         success = await self.manager.update_slander(self.slander_id, approved=False)
         if not success:
-            return await interaction.response.send_message("Failed to update this slander. Was it deleted?", ephemeral=True)
+            return await interaction.response.send_message(
+                "Failed to update this slander. Was it deleted?", ephemeral=True
+            )
 
         embed = interaction.message.embeds[0]
-        embed.set_footer(text='Slander denied.')
+        embed.set_footer(text="Slander denied.")
         embed.colour = discord.Colour.red()
         await interaction.response.edit_message(embed=embed, view=None)
+        await self.send_notification(interaction, self.slander_id)
         self.stop()
 
 
 class SlanderManager:
-    def __init__(self, pool: asyncpg.Pool[asyncpg.Record], queue_channel_id: int, anyone_can_click: bool) -> None:
+    def __init__(
+        self,
+        pool: asyncpg.Pool[asyncpg.Record],
+        queue_channel_id: int,
+        anyone_can_click: bool,
+    ) -> None:
         self._pool: asyncpg.Pool[asyncpg.Record] = pool
         self._channel_id: int = queue_channel_id
         self._no_view_check: bool = anyone_can_click
@@ -158,7 +225,7 @@ class SlanderManager:
         try:
             await self.start()
         except Exception as e:
-            log.error('Could not start slander manager\'s cache.', exc_info=e)
+            log.error("Could not start slander manager's cache.", exc_info=e)
 
         return self
 
@@ -171,7 +238,9 @@ class SlanderManager:
         slanders: list[asyncpg.Record] = await self._pool.fetch(query)
         self._all_slanders = dict(slanders)  # type: ignore  # Yes you can be dict()'d.
 
-        query: str = "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE;"
+        query: str = (
+            "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE;"
+        )
         safe_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
         self._safe_slanders = dict(safe_slanders)  # type: ignore  # Yes you can be dict()'d.
         self.started = True
@@ -222,17 +291,23 @@ class SlanderManager:
             channel = bot.get_channel(self._channel_id)
             if not isinstance(channel, discord.TextChannel):
                 raise NoSlanderQueue
-            query: str = "INSERT INTO slanders (message, creator) VALUES ($1, $2) RETURNING id"
+            query: str = (
+                "INSERT INTO slanders (message, creator) VALUES ($1, $2) RETURNING id"
+            )
             try:
                 slander_id: int = await conn.fetchval(query, slander, requester.id)
             except asyncpg.UniqueViolationError as e:
                 raise SlanderAlreadyExists from e
 
             embed = discord.Embed(
-                title=f'Slander request from {requester}', description=slander, color=discord.Color.blurple()
+                title=f"Slander request from {requester}",
+                description=slander,
+                color=discord.Color.blurple(),
             )
 
-            await channel.send(embed=embed, view=QueueView(slander_id=slander_id, manager=self))
+            await channel.send(
+                embed=embed, view=QueueView(slander_id=slander_id, manager=self)
+            )
 
     async def update_slander(
         self,
@@ -263,7 +338,7 @@ class SlanderManager:
             Wether the slander was successfully updated. If false, it means the slander
             was not found in the database, or no keyword-arguments were given.
         """
-        
+
         if approved is MISSING and nsfw is MISSING:
             return False
 
@@ -271,30 +346,32 @@ class SlanderManager:
         set_args: list[str] = []
 
         if nsfw is not MISSING:
-            set_args.append('nsfw={nsfw}')
-            args['nsfw'] = nsfw
+            set_args.append("nsfw={nsfw}")
+            args["nsfw"] = nsfw
 
         if approved is not MISSING:
-            set_args.append('approved={approved}')
-            args['approved'] = approved
+            set_args.append("approved={approved}")
+            args["approved"] = approved
 
-        query = "UPDATE slanders SET " + ", ".join(set_args) + " WHERE id={id} RETURNING *"
-        args['id'] = slander_id
+        query = (
+            "UPDATE slanders SET " + ", ".join(set_args) + " WHERE id={id} RETURNING *"
+        )
+        args["id"] = slander_id
 
         row = await self._pool.fetchrow(query.format_map(args), *args.values())
 
         if row:
             if nsfw is MISSING:
-                nsfw = row['nsfw']
+                nsfw = row["nsfw"]
             if approved is MISSING:
-                approved = row['approved']
+                approved = row["approved"]
 
             if approved:
-                self._all_slanders[slander_id] = row['message']
+                self._all_slanders[slander_id] = row["message"]
                 if nsfw:
                     self._safe_slanders.pop(slander_id, None)
                 else:
-                    self._safe_slanders[slander_id] = row['message']
+                    self._safe_slanders[slander_id] = row["message"]
             else:
                 self._remove_slander_from_queues(slander_id)
             return True
