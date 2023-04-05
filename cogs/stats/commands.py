@@ -11,10 +11,11 @@ from utils.embeds import MEE6Embed
 class StatsCommands(Stats):
     @commands.command()
     async def stats(self, ctx: Context):
+        all_time = await self.bot.pool.fetchval("SELECT count(*) FROM messages")
         await ctx.send(
             embed=MEE6Embed.stats_embed(
                 self.msg_count,
-                self.bot.pool.fetchval("SELECT count(*) FROM messages"),
+                int(all_time),
                 self.del_count,
                 self.edit_count,
                 self.servers_joined,
