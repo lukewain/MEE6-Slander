@@ -73,12 +73,17 @@ class MEE6Embed(Embed):
         return embed
 
     @staticmethod
-    def stats_embed(sent, deleted, edited, joined, left, slandered, started, icon_url):
+    def stats_embed(
+        sent, all_time, deleted, edited, joined, left, slandered, started, icon_url
+    ):
         embed = Embed(
             description=f"Stats from the bot since <t:{started}:F>", color=Color.gold()
         )
         embed.set_author(name="Stats", icon_url=icon_url)
         embed.add_field(name="Messages Seen", value=f"{sent:,}", inline=False)
+        embed.add_field(
+            name="All Time Messages Seen", value=f"{all_time:,}", inline=False
+        )
         embed.add_field(name="Messages Deleted", value=f"{deleted:,}", inline=False)
         embed.add_field(name="Messages Edited", value=f"{edited:,}", inline=False)
         embed.add_field(name="Servers Joined", value=f"{joined:,}", inline=False)

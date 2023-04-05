@@ -9,6 +9,9 @@ class StatTracker(Stats):
     async def on_message(self, message: Message):
         self.msg_count += 1
 
+        # Allow all time messages
+        await self.bot.pool.execute("INSERT INTO messages (id) VALUES ($1)", message.id)
+
         # Check if the message sent is a slander
 
         # Check if prefix is in message

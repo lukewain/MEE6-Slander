@@ -14,6 +14,7 @@ class StatsCommands(Stats):
         await ctx.send(
             embed=MEE6Embed.stats_embed(
                 self.msg_count,
+                self.bot.pool.fetchval("SELECT count(*) FROM messages"),
                 self.del_count,
                 self.edit_count,
                 self.servers_joined,
