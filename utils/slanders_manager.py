@@ -94,13 +94,13 @@ class QueueView(discord.ui.View):
 
         embed = discord.Embed(description=res["message"])
         if res["nsfw"] and res["approved"]:
-            embed.title = "Slander Accepted (NSFW)"
+            embed.title = f"Slander Accepted (NSFW) by {interaction.user}"
             embed.color = discord.Colour.orange()
         elif res["approved"]:
-            embed.title = "Slander Accepted"
+            embed.title = f"Slander Accepted by {interaction.user}"
             embed.color = discord.Colour.green()
         else:
-            embed.title = "Slander Denied"
+            embed.title = f"Slander Denied by {interaction.user}"
             embed.color = discord.Colour.red()
 
         # Fetch the user
