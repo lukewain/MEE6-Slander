@@ -3,6 +3,7 @@ import os
 import aiohttp
 
 import discord
+from discord.ext import commands
 from discord.ext.commands import Bot
 from discord import DiscordException, Intents, AllowedMentions, Status, Game
 from discord.utils import setup_logging
@@ -37,11 +38,12 @@ class MEE6Slander(Bot):
         intents.members = True
 
         self.prefix: str = environ["PREFIX"] if not dev_mode else environ["DEV_PREFIX"]
+        self.actual_prefix = commands.when_mentioned_or(self.prefix)
 
         allowed_mentions = AllowedMentions(everyone=False, users=False, roles=False)
 
         super().__init__(
-            command_prefix=self.prefix,
+            command_prefix=self.actual_prefix,
             intents=intents,
             allowed_mentions=allowed_mentions,
             tree_cls=SlanderTree,
@@ -66,6 +68,7 @@ class MEE6Slander(Bot):
         await self.load_extension("cogs.events")
         await self.load_extension("cogs.config")
         await self.load_extension("cogs.suggest")
+        await self.load_extension("cogs.stats")
 
         self._log_webhook: discord.Webhook = discord.Webhook.from_url(
             url=os.environ["WEBHOOK_URL"], session=self._session, bot_token=self.token
