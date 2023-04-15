@@ -43,7 +43,7 @@ class CommandErrorHandler(commands.Cog):
             return
 
         if isinstance(error, commands.NotOwner):
-            return await ctx.author.send(
+            return await ctx.reply(
                 embed=discord.Embed(
                     title="Whoops",
                     description="You are not the owner. You cannot do that.",
