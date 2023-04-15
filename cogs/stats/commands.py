@@ -12,6 +12,8 @@ class StatsCommands(Stats):
     @commands.command()
     async def stats(self, ctx: Context):
         all_time = await self.bot.pool.fetchval("SELECT count(*) FROM messages")
+        server_count = len(self.bot.guilds)
+
         await ctx.send(
             embed=MEE6Embed.stats_embed(
                 self.msg_count,
@@ -20,6 +22,7 @@ class StatsCommands(Stats):
                 self.edit_count,
                 self.servers_joined,
                 self.servers_left,
+                server_count,
                 self.slanders_sent,
                 self.start_time,
                 self.bot.user.display_avatar.url if self.bot.user else "",

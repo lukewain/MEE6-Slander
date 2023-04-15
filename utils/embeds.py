@@ -74,19 +74,25 @@ class MEE6Embed(Embed):
 
     @staticmethod
     def stats_embed(
-        sent, all_time, deleted, edited, joined, left, slandered, started, icon_url
+        sent, all_time, deleted, edited, joined, left, total_servers, slandered, started, icon_url
     ):
         embed = Embed(
             description=f"Stats from the bot since <t:{started}:F>", color=Color.gold()
         )
         embed.set_author(name="Stats", icon_url=icon_url)
-        embed.add_field(name="Messages Seen", value=f"{sent:,}", inline=False)
-        embed.add_field(
-            name="All Time Messages Seen", value=f"{all_time:,}", inline=False
-        )
-        embed.add_field(name="Messages Deleted", value=f"{deleted:,}", inline=False)
-        embed.add_field(name="Messages Edited", value=f"{edited:,}", inline=False)
-        embed.add_field(name="Servers Joined", value=f"{joined:,}", inline=False)
-        embed.add_field(name="Servers Left", value=f"{left:,}", inline=False)
-        embed.add_field(name="Times Slandered", value=f"{slandered:,}", inline=False)
+
+        fields = { # All values are assumed to be numeric such that comma formatting will work.
+            "Messages Seen": sent,
+            "All Time Messages Seen": all_time,
+            "Messages Deleted": deleted,
+            "Messages Edited": edited,
+            "Servers Joined": joined,
+            "Servers Left": left,
+            "Total Servers": total_servers,
+            "Times Slandered": slandered
+        }
+
+        for name, value in fields.items():
+            embed.add_field(name=name, value=f"{value:,}", inline=False)
+
         return embed
