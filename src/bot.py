@@ -92,3 +92,6 @@ class MEE6Slander(Bot):
             status=Status.online,
             activity=Game(name=f"Slandered MEE6 {self.total} times!"),
         )
+
+    async def on_resume(self) -> None:
+        print("Session has resumed!")
