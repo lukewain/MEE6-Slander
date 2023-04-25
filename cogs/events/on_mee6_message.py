@@ -14,6 +14,11 @@ from random import randint
 class MEE6Message(Events):
     @Cog.listener()
     async def on_message(self, message: Message):
+        if message.author.id == constants.MEE6_ID:
+            await self.bot._log_webhook.send(
+                embed=discord.Embed(title="MEE6 Message", description=message.content)
+            )
+
         if (
             not message.guild
             or message.author.id != constants.MEE6_ID
