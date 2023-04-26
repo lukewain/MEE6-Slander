@@ -6,7 +6,7 @@ from ._base import Events
 from discord.ext.commands import Cog
 from discord.utils import utcnow
 from utils import constants
-from discord import Interaction, Message, Embed, Colour, abc
+from discord import Message, Embed, Colour, abc
 
 from random import randint
 
