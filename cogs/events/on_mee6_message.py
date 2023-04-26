@@ -33,7 +33,7 @@ class MEE6Message(Events):
             await message.channel.send(
                 embed=discord.Embed(
                     title="Support Server",
-                    description=f"MEE6 Slander support server is now live. Join [here] ({self.bot.support_link})",
+                    description=f"MEE6 Slander support server is now live. Join [here]({self.bot.support_link})",
                 )
             )
         await self.increment_status(message, slander)
@@ -47,7 +47,9 @@ class MEE6Message(Events):
             return
 
         # Get total slanders
-        total_slanders = await self.bot.pool.fetchval("SELECT count(*) from slanders")
+        total_slanders = await self.bot.pool.fetchval(
+            "SELECT count(*) FROM slander_log"
+        )
 
         embed = Embed(colour=Colour.blurple(), timestamp=utcnow())
         embed.set_author(name=f"New Slander! #{total_slanders}")
