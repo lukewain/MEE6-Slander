@@ -19,11 +19,7 @@ class MEE6Message(Events):
                 embed=discord.Embed(title="MEE6 Message", description=message.content)
             )
 
-        if (
-            not message.guild
-            or message.author.id != constants.MEE6_ID
-            or "you just advanced" not in message.content
-        ):
+        if not message.guild or message.author.id != constants.MEE6_ID:
             return
 
         slander = self.bot.slander_manager.get_slander(message.guild)
