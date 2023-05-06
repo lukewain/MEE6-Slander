@@ -8,6 +8,7 @@ import collections
 import logging
 import random
 from typing import Deque, Dict, Tuple, Set, TypeAlias, NamedTuple
+import typing
 
 import asyncpg
 import discord
@@ -22,6 +23,7 @@ __all__: Tuple[str, ...] = (
 )
 
 GuildID: TypeAlias = int
+UserID: TypeAlias = int
 SlanderID: TypeAlias = int
 
 log = logging.getLogger("SlanderManager")
@@ -49,6 +51,12 @@ class PGSafeDict(dict):
 
 class GuildConfig(NamedTuple):
     """Container to access settings for a guild."""
+
+    nsfw: bool
+
+
+class UserConfig(NamedTuple):
+    """Container to access settings for a user."""
 
     nsfw: bool
 
@@ -104,9 +112,10 @@ class QueueView(discord.ui.View):
             embed.color = discord.Colour.red()
 
         # Fetch the user
-        creator_obj: discord.User = await interaction.client.fetch_user(res["creator"])
+        creator_obj: discord.User | None = interaction.client.get_user(res["creator"])
 
-        await creator_obj.send(embed=embed)
+        if creator_obj:
+            await creator_obj.send(embed=embed)
 
     @discord.ui.button(
         label="approve",
@@ -216,8 +225,11 @@ class SlanderManager:
 
         self._safe_slanders: Dict[SlanderID, str] = {}
         self._all_slanders: Dict[SlanderID, str] = {}
-        self._slander_queues: Dict[GuildID, Deque[int]] = {}
+        self._user_slanders: Dict[SlanderID, str] = {}
+        self._safe_user_slanders: Dict[SlanderID, str] = {}
+        self._slander_queues: Dict[GuildID | UserID, Deque[int]] = {}
         self._nsfw_guilds: Set[GuildID] = set()
+        self._nsfw_users: Set[UserID] = set()
 
         self.started: bool = False
 
@@ -243,6 +255,25 @@ class SlanderManager:
         )
         safe_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
         self._safe_slanders = dict(safe_slanders)  # type: ignore  # Yes you can be dict()'d.
+        query: str = (
+            "SELECT id, message FROM slanders WHERE approved = TRUE AND is_user = TRUE;"
+        )
+        user_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
+        self._user_slanders = dict(user_slanders)  # type: ignore   # Yes you can be dict()'d.
+        query: str = "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE AND is_user = TRUE;"
+        safe_user_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
+        self._safe_user_slanders = dict(safe_user_slanders)  # type: ignore   # Yes you can be dict()'d.
+
+        """Caches all the guilds and users"""
+        query: str = "SELECT id FROM guilds WHERE nsfw = TRUE AND added IS NOT NULL;"
+        guilds: list[asyncpg.Record] = await self._pool.fetch(query)
+        guild_ids: list[int] = [GuildID(guild["id"]) for guild in guilds]
+        self._nsfw_guilds.update(guild_ids)
+
+        query: str = "SELECT id FROM alt_slander WHERE nsfw = TRUE;"
+        users: list[asyncpg.Record] = await self._pool.fetch(query)
+        user_ids: list[int] = [UserID(user["id"]) for user in users]
+        self._nsfw_users.update(user_ids)
         self.started = True
 
     async def register_views(self, client: commands.Bot):
@@ -291,11 +322,12 @@ class SlanderManager:
             channel = bot.get_channel(self._channel_id)
             if not isinstance(channel, discord.TextChannel):
                 raise NoSlanderQueue
-            query: str = (
-                "INSERT INTO slanders (message, creator) VALUES ($1, $2) RETURNING id"
-            )
+            user_friendly = "mee6" in slander.lower()
+            query: str = "INSERT INTO slanders (message, creator, is_user) VALUES ($1, $2, $3) RETURNING id"
             try:
-                slander_id: int = await conn.fetchval(query, slander, requester.id)
+                slander_id: int = await conn.fetchval(
+                    query, slander, requester.id, user_friendly
+                )
             except asyncpg.UniqueViolationError as e:
                 raise SlanderAlreadyExists from e
 
@@ -399,35 +431,59 @@ class SlanderManager:
 
         return len(result) == 1
 
-    def get_slander(self, guild: discord.Guild) -> str:
+    def get_slander(
+        self,
+        *,
+        guild: typing.Optional[discord.Guild],
+        user: typing.Optional[typing.Union[discord.Member, discord.User]],
+    ) -> str:  # type: ignore    # Can be ignored due to one always being included
         """
-        Gets a slander from the guild's queue. If there's no queue or if it
+        Gets a slander from the guild's or user's queue. If there's no queue or if it
         has been exhausted, it creates a new randomly shuffled queue.
 
         Parameter
         ---------
-        guild: discord.Guild
+        guild: discord.Guild | None
             The guild to use to get the queue.
+
+        user: discord.User | discord.Member | None
+            The user to get a queue for.
 
         Returns
         -------
         str
-            A slander slander that's not been used before.
+            A slander that's not been used before.
         """
-        try:
-            slander_id = self._slander_queues[guild.id].pop()
-        except (KeyError, IndexError):
-            # The queue was exhausted or non-existent, so we need to create a new shuffled one.
-            if guild.id in self._nsfw_guilds:
-                slanders = list(self._all_slanders.keys())
-            else:
-                slanders = list(self._safe_slanders.keys())
-            random.shuffle(slanders)
+        if guild:
+            try:
+                slander_id = self._slander_queues[guild.id].pop()
+            except (KeyError, IndexError):
+                # The queue was exhausted or non-existent, so we need to create a new shuffled one.
+                if guild.id in self._nsfw_guilds:
+                    slanders = list(self._all_slanders.keys())
+                else:
+                    slanders = list(self._safe_slanders.keys())
+                random.shuffle(slanders)
 
-            *slanders, slander_id = slanders
-            self._slander_queues[guild.id] = collections.deque(slanders)
+                *slanders, slander_id = slanders
+                self._slander_queues[guild.id] = collections.deque(slanders)
 
-        return self._all_slanders[slander_id]
+            return self._all_slanders[slander_id]
+
+        elif user:
+            try:
+                slander_id = self._slander_queues[user.id].pop()
+            except (KeyError, IndexError):
+                if user.id in self._nsfw_users:
+                    slanders = list(self._user_slanders.keys())
+                else:
+                    slanders = list(self._safe_user_slanders.keys())
+                random.shuffle(slanders)
+
+                *slanders, slander_id = slanders
+                self._slander_queues[user.id] = collections.deque(slanders)
+
+            return self._all_slanders[slander_id]
 
     def get_guild_config(self, guild: discord.Guild) -> GuildConfig:
         """Gets the current settings for this guild.
@@ -445,6 +501,21 @@ class SlanderManager:
         return GuildConfig(
             nsfw=guild.id in self._nsfw_guilds,
         )
+
+    def get_user_config(self, user: discord.User | discord.Member) -> UserConfig:
+        """Gets the current settings for the user.
+
+        Parameters
+        __________
+        user: discord.User | discord.Member
+            The user to get the config for
+
+        Returns
+        _______
+        UserConfig
+            The current settings for the user
+        """
+        return UserConfig(nsfw=user.id in self._nsfw_users)
 
     async def update_guild(self, guild: discord.Guild, /, *, nsfw: bool):
         """
