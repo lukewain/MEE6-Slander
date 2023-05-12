@@ -75,6 +75,16 @@ class SlanderAlreadyExists(discord.ClientException):
         super().__init__("That slander already exists.")
 
 
+class InvalidExecuteLocation(Exception):
+    def __init__(self) -> None:
+        super().__init__("This command can only be run from a guild.")
+
+
+class UserDMNotOpen(Exception):
+    def __init__(self, user: discord.User) -> None:
+        super().__init__(f"{user} does not have their DM's opened.")
+
+
 class QueueView(discord.ui.View):
     def __init__(self, *, slander_id: int, manager: SlanderManager):
         super().__init__(timeout=None)
@@ -115,7 +125,10 @@ class QueueView(discord.ui.View):
         creator_obj: discord.User | None = interaction.client.get_user(res["creator"])
 
         if creator_obj:
-            await creator_obj.send(embed=embed)
+            try:
+                await creator_obj.send(embed=embed)
+            except discord.errors.Forbidden:
+                raise UserDMNotOpen(creator_obj)
 
     @discord.ui.button(
         label="approve",
@@ -433,9 +446,8 @@ class SlanderManager:
 
     def get_slander(
         self,
-        *,
-        guild: typing.Optional[discord.Guild],
-        user: typing.Optional[typing.Union[discord.Member, discord.User]],
+        guild: typing.Optional[discord.Guild] = None,
+        user: typing.Optional[typing.Union[discord.Member, discord.User]] = None,
     ) -> str:  # type: ignore    # Can be ignored due to one always being included
         """
         Gets a slander from the guild's or user's queue. If there's no queue or if it
@@ -539,6 +551,40 @@ class SlanderManager:
         else:
             self._nsfw_guilds.discard(guild.id)
 
+    async def update_user(
+        self, user: discord.Member, /, *, nsfw: typing.Optional[bool]
+    ):
+        """
+        Updates the settings of a user.
+
+        Inherits from the guild's nsfw settings
+
+        Parameters
+        ----------
+        user: discord.User | discord.Member
+            The user to update
+        nsfw: Optional[bool]
+            If specified will override the guild config
+        """
+
+        if not user.guild:
+            raise InvalidExecuteLocation
+
+        if bool:
+            # Overrides the guild config
+            is_nsfw = await self._pool.fetchval(
+                "UPDATE alt_slander SET nsfw=$1 WHERE id=$2 AND guild_id=$3",
+                nsfw,
+                user.id,
+                user.guild.id,
+            )
+
+        else:
+            # Fetch the guild config
+            guild_nsfw = await self._pool.fetchval(
+                "SELECT nsfw FROM guild WHERE id=$1", user.guild.id
+            )
+
     def __repr__(self) -> str:
         cls = type(self)
-        return f"<{cls.__module__}.{cls.__name__} with queue at {self._channel_id}, with {len(self._all_slanders)} slanders and {len(self._slander_queues)} active queues>"
+        return f"<{cls.__module__}.{cls.__name__} with queue at {self._channel_id}, with {len(self._all_slanders)} guild slanders, {len(self._user_slanders)} user slanders and {len(self._slander_queues)} active queues>"
