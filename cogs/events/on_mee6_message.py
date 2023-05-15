@@ -22,8 +22,9 @@ class MEE6Message(Events):
         if not message.guild or message.author.id != constants.MEE6_ID:
             return
 
-        slander = self.bot.slander_manager.get_slander(message.guild)
+        slander = self.bot.slander_manager.get_slander(guild=message.guild)
         await message.reply(content=slander)
+        self.bot.dispatch("slander")
         if self.bot.show_support_link and randint(0, 100) < 10:
             utils.log("Notified about support server", "WARN")
             await message.channel.send(
