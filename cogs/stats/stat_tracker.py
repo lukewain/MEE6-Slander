@@ -33,6 +33,10 @@ class StatTracker(Stats):
     @Cog.listener()
     async def on_guild_remove(self, guild: Guild):
         self.servers_left += 1
+    
+    @Cog.listener()
+    async def on_slander(self):
+        self.slanders_sent += 1
 
     @Cog.listener()
     async def on_slander(self):
