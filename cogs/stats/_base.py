@@ -14,6 +14,8 @@ class Stats(Cog):
         self.servers_joined = 0
         self.servers_left = 0
         self.slanders_sent = 0
+        self.text_commands = 0
+        self.app_commands = 0
 
     async def cog_load(self):
         self.start_time = round(utcnow().timestamp())
