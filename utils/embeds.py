@@ -74,14 +74,25 @@ class MEE6Embed(Embed):
 
     @staticmethod
     def stats_embed(
-        sent, all_time, deleted, edited, joined, left, total_servers, slandered, started, icon_url
+        sent,
+        all_time,
+        deleted,
+        edited,
+        joined,
+        left,
+        total_servers,
+        slandered,
+        started,
+        icon_url,
+        text_cmds,
+        app_cmds,
     ):
         embed = Embed(
             description=f"Stats from the bot since <t:{started}:F>", color=Color.gold()
         )
         embed.set_author(name="Stats", icon_url=icon_url)
 
-        fields = { # All values are assumed to be numeric such that comma formatting will work.
+        fields = {  # All values are assumed to be numeric such that comma formatting will work.
             "Messages Seen": sent,
             "All Time Messages Seen": all_time,
             "Messages Deleted": deleted,
@@ -89,7 +100,9 @@ class MEE6Embed(Embed):
             "Servers Joined": joined,
             "Servers Left": left,
             "Total Servers": total_servers,
-            "Times Slandered": slandered
+            "Times Slandered": slandered,
+            "Text Commands Used": text_cmds,
+            "/ Commands Used": app_cmds,
         }
 
         for name, value in fields.items():

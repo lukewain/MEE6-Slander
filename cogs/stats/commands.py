@@ -26,6 +26,8 @@ class StatsCommands(Stats):
                 self.slanders_sent,
                 self.start_time,
                 self.bot.user.display_avatar.url if self.bot.user else "",
+                self.text_commands,
+                self.app_commands,
             )
         )
 
@@ -33,7 +35,8 @@ class StatsCommands(Stats):
         name="suggestions", description="See the number of suggestions sent by a user."
     )
     async def suggestions(self, ctx: Context, *, user: typing.Optional[discord.Member]):
-        ...
+        if ctx.interaction:
+            await self.bot.dispatch("app_command_used")
         if not user:
             search_id: int = ctx.author.id
         else:

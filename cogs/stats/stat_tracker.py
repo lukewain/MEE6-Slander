@@ -37,3 +37,11 @@ class StatTracker(Stats):
     @Cog.listener()
     async def on_slander(self):
         self.slanders_sent += 1
+
+    @Cog.listener()
+    async def on_app_command_used(self):
+        self.app_commands += 1
+
+    @Cog.listener()
+    async def on_command(self, command):
+        self.text_commands += 1
