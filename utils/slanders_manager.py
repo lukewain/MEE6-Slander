@@ -9,11 +9,12 @@ import logging
 import random
 from typing import Deque, Dict, Tuple, Set, TypeAlias, NamedTuple
 import typing
-
 import asyncpg
 import discord
 from discord.ext import commands
 from discord.utils import MISSING
+
+from .helpers import *
 
 __all__: Tuple[str, ...] = (
     "SlanderManager",
@@ -289,6 +290,11 @@ class SlanderManager:
         self._nsfw_users.update(user_ids)
         self.started = True
 
+        """Cache all the global slander target ids"""
+        query: str = "SELECT id FROM slander_targets WHERE global = TRUE;"
+        global_targets: list[asyncpg.Record] = await self._pool.fetch(query)
+        self._global_targets = global_targets
+
     async def register_views(self, client: commands.Bot):
         query: str = "SELECT ARRAY(SELECT id FROM slanders WHERE approved ISNULL);"
         slander_ids = await self._pool.fetchval(query)
@@ -444,6 +450,22 @@ class SlanderManager:
 
         return len(result) == 1
 
+    async def process_message(self, message: discord.Message):
+        if message.author.id in self._global_targets:
+            return await message.reply(
+                self.get_slander(message.guild.id, message.author.id)
+            )
+
+        query = "SELECT * FROM slander_targets WHERE id=$1 AND guild_id=$2"
+        db_resp: list[asyncpg.Record] = await self._pool.fetch(
+            query, message.author.id, message.guild.id
+        )
+
+        # Format them into SlanderTarget's
+        if len(db_resp) == 0:
+            return
+        slander_target_list = [SlanderTarget.construct(entry) for entry in db_resp]
+
     def get_slander(
         self,
         guild: typing.Optional[discord.Guild] = None,
@@ -584,6 +606,21 @@ class SlanderManager:
             guild_nsfw = await self._pool.fetchval(
                 "SELECT nsfw FROM guild WHERE id=$1", user.guild.id
             )
+
+    async def register_new_slander_target(
+        self,
+        user: discord.Member,
+        guild_id: typing.Optinal[int],
+        is_global: typing.Optional[bool],
+    ) -> bool:
+        # Check if the target will be global
+        query = "SELECT * FROM slander_targets WHERE id = $1"
+        res: list[asyncpg.Record] = await self._pool.fetch(query, user.id)
+
+        if len(res) > 0:
+            pre_existing = [SlanderTarget.construct(data) for data in res]
+        else:
+            pre_existing = []
 
     def __repr__(self) -> str:
         cls = type(self)

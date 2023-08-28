@@ -36,3 +36,13 @@ CREATE TABLE IF NOT EXISTS blacklist (
     added_at TIMESTAMP WITH TIME ZONE,
     expires_at TIMESTAMP WITH TIME ZONE DEFAULT NULL -- Optional kwarg that would only blacklist the user for a specific amount of time
 );
+
+CREATE TABLE IF NOT EXISTS slander_targets (
+    id BIGINT PRIMARY KEY,
+    guild_id BIGINT, -- Will be a bigint (guild id) if the target is not global
+    is_global BOOLEAN,
+    bot BOOLEAN,
+    nsfw BOOLEAN -- Can be overridden by the guild config if that is set to false
+);
+
+INSERT INTO slander_targets (id, global, bot, nsfw) VALUES (159985870458322944, TRUE, TRUE, TRUE), (1126230144273616966, TRUE, TRUE, TRUE) ON CONFLICT (id) DO NOTHING;

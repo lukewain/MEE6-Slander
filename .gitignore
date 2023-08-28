@@ -162,3 +162,6 @@ refs/errorhandling/errorlog.py
 refs/errorhandling/errorhandler.py
 register_slanders.py
 total_slander.json
+
+config.json
+testing.py
