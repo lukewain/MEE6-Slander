@@ -57,7 +57,7 @@ class MEE6Slander(Bot):
         )
 
         self.join_leave_webhook = discord.Webhook.from_url(
-            self.config.join_leave_webhook, session=self._session
+            self.config.join_leave_webhook, session=aiosession
         )
 
         self.github: str = "https://github.com/lukewain/MEE6-Slander"
