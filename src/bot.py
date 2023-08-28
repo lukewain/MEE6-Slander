@@ -38,7 +38,7 @@ class MEE6Slander(Bot):
         intents.members = True
 
         self.prefix: str = (
-            config.prefix if not config.devloper_mode else config.developer_prefix
+            config.prefix if not config.developer_mode else config.developer_prefix
         )
         self.actual_prefix = commands.when_mentioned_or(self.prefix)
 
