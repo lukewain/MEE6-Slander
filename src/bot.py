@@ -8,19 +8,16 @@ from discord.ext.commands import Bot
 from discord import DiscordException, Intents, AllowedMentions, Status, Game
 from discord.utils import setup_logging
 
-from os import environ
-from dotenv import load_dotenv
 import time
 import asyncpg
-
-from json import load
-
+import logging
 
 import utils
 from .tree import SlanderTree
 
-load_dotenv()
 setup_logging()
+
+_log = logging.getLogger(__name__)
 
 
 class MEE6Slander(Bot):
@@ -30,14 +27,19 @@ class MEE6Slander(Bot):
         pool: asyncpg.Pool[asyncpg.Record],
         slander_manager: utils.SlanderManager,
         aiosession: aiohttp.ClientSession,
-        dev_mode: bool,
+        config: utils.Config,
     ):
+        # Define the bots config file
+        self.config = config
+
         # Define the bot's intents
         intents: Intents = Intents().default()
         intents.message_content = True
         intents.members = True
 
-        self.prefix: str = environ["PREFIX"] if not dev_mode else environ["DEV_PREFIX"]
+        self.prefix: str = (
+            config.prefix if not config.dev_mode else config.developer_prefix
+        )
         self.actual_prefix = commands.when_mentioned_or(self.prefix)
 
         allowed_mentions = AllowedMentions(everyone=False, users=False, roles=False)
@@ -50,12 +52,16 @@ class MEE6Slander(Bot):
         )
 
         self.dev_mode: bool = dev_mode  # type: ignore
-        self.token: str = environ["TOKEN"] if not dev_mode else environ["DEV_TOKEN"]
+        self.token: str = config.token if not config.dev_mode else config.dev_token
+
+        self.join_leave_webhook = discord.Webhook.from_url(
+            self.config.join_leave_webhook
+        )
 
         self.github: str = "https://github.com/lukewain/MEE6-Slander"
 
         self.support_link: str = "https://discord.gg/EQpxMZSFy3"
-        self.show_support_link: bool = os.environ["SHOW_SUPPORT_LINK"] == "True"
+        self.show_support_link: bool = config.show_support_link
 
         self.pool: asyncpg.Pool[asyncpg.Record] = pool
         self.slander_manager: utils.SlanderManager = slander_manager
@@ -71,7 +77,7 @@ class MEE6Slander(Bot):
         await self.load_extension("cogs.stats")
 
         self._log_webhook: discord.Webhook = discord.Webhook.from_url(
-            url=os.environ["WEBHOOK_URL"], session=self._session, bot_token=self.token
+            url=self.config.webhook_url, session=self._session, bot_token=self.token
         )
 
     async def create_tables(self):
@@ -84,14 +90,14 @@ class MEE6Slander(Bot):
 
         with open("./src/schema.sql") as file:
             await self.pool.execute(file.read())
-        utils.log("Schema successfully uploaded")
+        _log.info("Loaded schema!")
 
     async def on_ready(self) -> None:
-        utils.log(f"Logged in as {self.user}")
+        _log.info(f"Logged in as {self.user}")
         await self.change_presence(
             status=Status.online,
             activity=Game(name=f"Slandered MEE6 {self.total} times!"),
         )
 
     async def on_resume(self) -> None:
-        print("Session has resumed!")
+        _log.info("Session is resumed!")
