@@ -291,7 +291,7 @@ class SlanderManager:
         self.started = True
 
         """Cache all the global slander target ids"""
-        query: str = "SELECT id FROM slander_targets WHERE global = TRUE;"
+        query: str = "SELECT id FROM slander_targets WHERE is_global = TRUE;"
         global_targets: list[asyncpg.Record] = await self._pool.fetch(query)
         self._global_targets = global_targets
 
