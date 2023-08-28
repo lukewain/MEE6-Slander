@@ -45,4 +45,4 @@ CREATE TABLE IF NOT EXISTS slander_targets (
     nsfw BOOLEAN -- Can be overridden by the guild config if that is set to false
 );
 
-INSERT INTO slander_targets (id, global, bot, nsfw) VALUES (159985870458322944, TRUE, TRUE, TRUE), (1126230144273616966, TRUE, TRUE, TRUE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO slander_targets (id, is_global, bot, nsfw) VALUES (159985870458322944, TRUE, TRUE, TRUE), (1126230144273616966, TRUE, TRUE, TRUE) ON CONFLICT (id) DO NOTHING;
