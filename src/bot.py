@@ -51,7 +51,7 @@ class MEE6Slander(Bot):
             tree_cls=SlanderTree,
         )
 
-        self.dev_mode: bool = dev_mode  # type: ignore
+        self.dev_mode: bool = config.developer_mode  # type: ignore
         self.token: str = (
             config.token if not config.developer_mode else config.developer_token
         )
