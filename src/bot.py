@@ -38,7 +38,7 @@ class MEE6Slander(Bot):
         intents.members = True
 
         self.prefix: str = (
-            config.prefix if not config.dev_mode else config.developer_prefix
+            config.prefix if not config.devloper_mode else config.developer_prefix
         )
         self.actual_prefix = commands.when_mentioned_or(self.prefix)
 
@@ -52,7 +52,9 @@ class MEE6Slander(Bot):
         )
 
         self.dev_mode: bool = dev_mode  # type: ignore
-        self.token: str = config.token if not config.dev_mode else config.dev_token
+        self.token: str = (
+            config.token if not config.developer_mode else config.developer_token
+        )
 
         self.join_leave_webhook = discord.Webhook.from_url(
             self.config.join_leave_webhook
