@@ -38,7 +38,7 @@ class Config:
     token: str
     dev_token: str | None
     pg_dsn: str
-    developerdsn: str | None
+    developer_dsn: str | None
     queue_cid: int
     anyone_can_click: bool
     show_support_link: bool
