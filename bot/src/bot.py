@@ -103,3 +103,7 @@ class MEE6Slander(Bot):
 
     async def on_resume(self) -> None:
         _log.info("Session is resumed!")
+
+
+# TODO: Start on web page for MEE6 Slander. Allow for managing servers and features from a dashboard. Fetch from IPC and save settings into a server
+# TODO: Get user's discord token from oauth
