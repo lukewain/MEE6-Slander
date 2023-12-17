@@ -1,4 +1,4 @@
-# TODO:  Store and manage wether a guild is NSFW or not.
+# TODO:  Store and manage whether a guild is NSFW or not.
 # MAYBE TODO: Make a `Slander` class and a `State` class to handle state things.
 
 

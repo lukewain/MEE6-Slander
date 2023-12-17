@@ -53,7 +53,7 @@ class MEE6Slander(Bot):
 
         self.dev_mode: bool = config.developer_mode  # type: ignore
         self.token: str = (
-            config.token if not config.developer_mode else config.developer_token
+            config.token if not config.developer_mode else config.dev_token
         )
 
         self.join_leave_webhook = discord.Webhook.from_url(
@@ -81,18 +81,26 @@ class MEE6Slander(Bot):
         self._log_webhook: discord.Webhook = discord.Webhook.from_url(
             url=self.config.webhook_url, session=self._session, bot_token=self.token
         )
+        
+        # Gather all the counter variables
+        
+        self.message_count = await self.gather_message_count()
 
     async def create_tables(self):
+        with open("./src/schema.sql") as file:
+            await self.pool.execute(file.read())
+        _log.info("Loaded schema!")
+        
         self.total = await self.pool.fetchval("SELECT count(*) FROM slander_log")
         for i in range(self.total):
             if self.total % 5 == 0:
                 break
             else:
                 self.total -= 1
-
-        with open("./src/schema.sql") as file:
-            await self.pool.execute(file.read())
-        _log.info("Loaded schema!")
+        
+    async def gather_message_count(self) -> int:
+        msg_count = await self.pool.fetchval("SELECT cvalue FROM counters WHERE cname='message_count'")
+        return msg_count
 
     async def on_ready(self) -> None:
         _log.info(f"Logged in as {self.user}")

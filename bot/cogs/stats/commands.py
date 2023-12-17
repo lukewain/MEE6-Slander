@@ -11,7 +11,7 @@ from utils.embeds import MEE6Embed
 class StatsCommands(Stats):
     @commands.command()
     async def stats(self, ctx: Context):
-        all_time = await self.bot.pool.fetchval("SELECT count(*) FROM messages")
+        all_time = await self.bot.pool.fetchval("SELECT cvalue FROM counters WHERE cname=message_count")
         server_count = len(self.bot.guilds)
 
         await ctx.send(
