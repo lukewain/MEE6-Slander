@@ -10,7 +10,7 @@ class StatTracker(Stats):
         self.msg_count += 1
 
         # Allow all time messages
-        await self.bot.pool.execute("UPDATE counters SET cvalue=cvalue + 1 WHERE cname=message_count")
+        await self.bot.pool.execute("UPDATE counters SET cvalue=cvalue + 1 WHERE cname='message_count'")
 
     # Listen for message delete
     @Cog.listener()
