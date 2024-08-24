@@ -1,6 +1,5 @@
 from discord.utils import utcnow
 from discord import Guild
-from asyncpg.pool import Pool
 
 from dataclasses import dataclass
 from json import load

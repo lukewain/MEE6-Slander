@@ -1,4 +1,4 @@
-import asyncpg
+from prisma import Prisma, models
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -12,9 +12,7 @@ class Suggestions(commands.Cog):
 
     async def interaction_check(self, interaction: discord.Interaction[MEE6Slander]):
         # Check if the user is in the blacklist db
-        res: asyncpg.Record | None = await interaction.client.pool.fetchrow(
-            "SELECT * FROM blacklist WHERE id=$1", interaction.user.id
-        )
+        res: models.BlackList | None = await interaction.client.prisma.blacklist.find_unique(where={"id": interaction.user.id})
 
         if not res:
             return True

@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from typing import Any
 
-import asyncpg
+from prisma import Prisma
 import time
 
 from src.bot import MEE6Slander
@@ -57,7 +57,7 @@ class InfoCommands(Information):
 
         # Database Latency
         pg_start: float = time.monotonic()
-        await ctx.bot.pool.fetch("SELECT 1")
+        await ctx.bot.prisma.execute_raw("SELECT 1")
         pg_end: float = time.monotonic()
         pg_ms: float = round((pg_end - pg_start) * 1000, 2)
         pings.append(pg_ms)

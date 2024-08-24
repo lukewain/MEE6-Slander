@@ -9,7 +9,7 @@ import logging
 import random
 from typing import Deque, Dict, Tuple, Set, TypeAlias, NamedTuple
 import typing
-import asyncpg
+from prisma import Prisma, models, errors
 import discord
 from discord.ext import commands
 from discord.utils import MISSING
@@ -109,13 +109,13 @@ class QueueView(discord.ui.View):
 
     async def send_notification(self, interaction: discord.Interaction, slander_id):
         # Fetch slander content
-        res: asyncpg.Record = await interaction.client.pool.fetchrow("SELECT * FROM slanders WHERE id=$1", slander_id)  # type: ignore
+        res: models.Slander = await interaction.client.prisma.slander.find_unique(where={"id": slander_id}) # type: ignore
 
-        embed = discord.Embed(description=res["message"])
-        if res["nsfw"] and res["approved"]:
+        embed = discord.Embed(description=res.message)
+        if res.nsfw and res.approved:
             embed.title = f"Slander Accepted (NSFW) by {interaction.user}"
             embed.color = discord.Colour.orange()
-        elif res["approved"]:
+        elif res.approved:
             embed.title = f"Slander Accepted by {interaction.user}"
             embed.color = discord.Colour.green()
         else:
@@ -123,7 +123,7 @@ class QueueView(discord.ui.View):
             embed.color = discord.Colour.red()
 
         # Fetch the user
-        creator_obj: discord.User | None = interaction.client.get_user(res["creator"])
+        creator_obj: discord.User | None = interaction.client.get_user(res.creator)
 
         if creator_obj:
             try:
@@ -229,11 +229,11 @@ class QueueView(discord.ui.View):
 class SlanderManager:
     def __init__(
         self,
-        pool: asyncpg.Pool[asyncpg.Record],
+        prisma: Prisma,
         queue_channel_id: int,
         anyone_can_click: bool,
     ) -> None:
-        self._pool: asyncpg.Pool[asyncpg.Record] = pool
+        self._prisma: Prisma = prisma
         self._channel_id: int = queue_channel_id
         self._no_view_check: bool = anyone_can_click
 
@@ -260,44 +260,44 @@ class SlanderManager:
 
     async def start(self):
         """Caches all the slanders."""
-        query: str = "SELECT id, message FROM slanders WHERE approved = TRUE;"
-        slanders: list[asyncpg.Record] = await self._pool.fetch(query)
+        slanders: list[models.Slander] = await self._prisma.slander.find_many(where={"approved": {"equals": True}})
         self._all_slanders = dict(slanders)  # type: ignore  # Yes you can be dict()'d.
 
-        query: str = (
-            "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE;"
-        )
-        safe_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
+        safe_slanders: list[models.Slander] = await self._prisma.slander.find_many(where={"approved": {"equals": True}, "nsfw": {"equals": False}})
         self._safe_slanders = dict(safe_slanders)  # type: ignore  # Yes you can be dict()'d.
-        query: str = (
-            "SELECT id, message FROM slanders WHERE approved = TRUE AND is_user = TRUE;"
-        )
-        user_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
-        self._user_slanders = dict(user_slanders)  # type: ignore   # Yes you can be dict()'d.
-        query: str = "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE AND is_user = TRUE;"
-        safe_user_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
-        self._safe_user_slanders = dict(safe_user_slanders)  # type: ignore   # Yes you can be dict()'d.
+        
+        # ! Unused currently
+        # ! Waiting to be implemented
+        # query: str = (
+        #     "SELECT id, message FROM slanders WHERE approved = TRUE AND is_user = TRUE;"
+        # )
+        # user_slanders: list[models.Slander] = await self._pool.fetch(query)
+        # self._user_slanders = dict(user_slanders)  # type: ignore   # Yes you can be dict()'d.
+        # query: str = "SELECT id, message FROM slanders WHERE approved = TRUE AND nsfw = FALSE AND is_user = TRUE;"
+        # safe_user_slanders: list[asyncpg.Record] = await self._pool.fetch(query)
+        # self._safe_user_slanders = dict(safe_user_slanders)  # type: ignore   # Yes you can be dict()'d.
 
         """Caches all the guilds and users"""
-        query: str = "SELECT id FROM guilds WHERE nsfw = TRUE AND added IS NOT NULL;"
-        guilds: list[asyncpg.Record] = await self._pool.fetch(query)
-        guild_ids: list[int] = [GuildID(guild["id"]) for guild in guilds]
+        guilds: list[models.Guild] = await self._prisma.guild.find_many(where={"nsfw": {"equals": True}, "added": {"not": None}})
+        guild_ids: list[int] = [GuildID(guild.id) for guild in guilds]
         self._nsfw_guilds.update(guild_ids)
 
-        query: str = "SELECT id FROM alt_slander WHERE nsfw = TRUE;"
-        users: list[asyncpg.Record] = await self._pool.fetch(query)
-        user_ids: list[int] = [UserID(user["id"]) for user in users]
-        self._nsfw_users.update(user_ids)
-        self.started = True
+        # ! Unused currently
+        # ! Unknown if this is actually needed
+        # query: str = "SELECT id FROM alt_slander WHERE nsfw = TRUE;"
+        # users: list[asyncpg.Record] = await self._pool.fetch(query)
+        # user_ids: list[int] = [UserID(user["id"]) for user in users]
+        # self._nsfw_users.update(user_ids)
+        # self.started = True
 
         """Cache all the global slander target ids"""
-        query: str = "SELECT id FROM slander_targets WHERE is_global = TRUE;"
-        global_targets: list[asyncpg.Record] = await self._pool.fetch(query)
+        global_targets: list[models.SlanderTarget] = await self._prisma.slandertarget.find_many(where={"is_global": {"equals": True}})
         self._global_targets = global_targets
 
     async def register_views(self, client: commands.Bot):
         query: str = "SELECT ARRAY(SELECT id FROM slanders WHERE approved ISNULL);"
-        slander_ids = await self._pool.fetchval(query)
+        unapproved_slanders: list[models.Slander] = await self._prisma.slander.find_many(where={"approved": {"equals": None}})
+        slander_ids: list[int] = [slander.id for slander in unapproved_slanders]
         for slander_id in slander_ids:
             client.add_view(QueueView(slander_id=slander_id, manager=self))
 
@@ -337,28 +337,24 @@ class SlanderManager:
         SlanderAlreadyExists
             There was already a slander with this name.
         """
-        async with self._pool.acquire() as conn, conn.transaction():
-            channel = bot.get_channel(self._channel_id)
-            if not isinstance(channel, discord.TextChannel):
-                raise NoSlanderQueue
-            user_friendly = "mee6" in slander.lower()
-            query: str = "INSERT INTO slanders (message, creator, is_user) VALUES ($1, $2, $3) RETURNING id"
-            try:
-                slander_id: int = await conn.fetchval(
-                    query, slander, requester.id, user_friendly
-                )
-            except asyncpg.UniqueViolationError as e:
-                raise SlanderAlreadyExists from e
+        channel = bot.get_channel(self._channel_id)
+        if not isinstance(channel, discord.TextChannel):
+            raise NoSlanderQueue
+        user_friendly = "mee6" in slander.lower()
+        try:
+            slander_id: int = await self._prisma.slander.create(data={"message": slander, "creator": requester.id, "is_user": user_friendly}, include={"id": True})
+        except errors.UniqueViolationError as e:
+            raise SlanderAlreadyExists from e
 
-            embed = discord.Embed(
-                title=f"Slander request from {requester}",
-                description=slander,
-                color=discord.Color.blurple(),
-            )
+        embed = discord.Embed(
+            title=f"Slander request from {requester}",
+            description=slander,
+            color=discord.Color.blurple(),
+        )
 
-            await channel.send(
-                embed=embed, view=QueueView(slander_id=slander_id, manager=self)
-            )
+        await channel.send(
+            embed=embed, view=QueueView(slander_id=slander_id, manager=self)
+        )
 
     async def update_slander(
         self,
@@ -393,36 +389,28 @@ class SlanderManager:
         if approved is MISSING and nsfw is MISSING:
             return False
 
-        args = PGSafeDict()
-        set_args: list[str] = []
-
-        if nsfw is not MISSING:
-            set_args.append("nsfw={nsfw}")
-            args["nsfw"] = nsfw
+        data = {}
 
         if approved is not MISSING:
-            set_args.append("approved={approved}")
-            args["approved"] = approved
+            data['approved'] = approved
 
-        query = (
-            "UPDATE slanders SET " + ", ".join(set_args) + " WHERE id={id} RETURNING *"
-        )
-        args["id"] = slander_id
+        if nsfw is not MISSING:
+            data['nsfw'] = nsfw
 
-        row = await self._pool.fetchrow(query.format_map(args), *args.values())
+        row = await self._prisma.slander.find_unique(where={"id": slander_id})
 
         if row:
             if nsfw is MISSING:
-                nsfw = row["nsfw"]
+                nsfw = row.nsfw
             if approved is MISSING:
-                approved = row["approved"]
+                approved = row.approved
 
             if approved:
-                self._all_slanders[slander_id] = row["message"]
+                self._all_slanders[slander_id] = row.message
                 if nsfw:
                     self._safe_slanders.pop(slander_id, None)
                 else:
-                    self._safe_slanders[slander_id] = row["message"]
+                    self._safe_slanders[slander_id] = row.message
             else:
                 self._remove_slander_from_queues(slander_id)
             return True
@@ -443,8 +431,7 @@ class SlanderManager:
             wether the slander was successfully deleted.
         """
 
-        query: str = "DELETE FROM slanders WHERE id = $1 RETURNING *"
-        result = await self._pool.fetch(query, slander_id)
+        result = await self._prisma.slander.delete(where={"id": slander_id})
 
         self._remove_slander_from_queues(slander_id)
 
@@ -457,9 +444,7 @@ class SlanderManager:
             )
 
         query = "SELECT * FROM slander_targets WHERE id=$1 AND guild_id=$2"
-        db_resp: list[asyncpg.Record] = await self._pool.fetch(
-            query, message.author.id, message.guild.id
-        )
+        db_resp: list[models.SlanderTarget] = await self._prisma.slandertarget.find_first(where={"id": message.author.id, "guild_id": message.guild.id})
 
         # Format them into SlanderTarget's
         if len(db_resp) == 0:
@@ -567,7 +552,7 @@ class SlanderManager:
             INSERT INTO guilds (id, nsfw) VALUES ($1, $2)
                 ON CONFLICT (id) DO UPDATE SET nsfw = $2
         """
-        await self._pool.execute(query, guild.id, nsfw)
+        await self._prisma.guild.upsert(where={"id": guild.id}, data={"nsfw": nsfw})
         if nsfw:
             self._nsfw_guilds.add(guild.id)
         else:
@@ -592,20 +577,18 @@ class SlanderManager:
         if not user.guild:
             raise InvalidExecuteLocation
 
-        if bool:
-            # Overrides the guild config
-            is_nsfw = await self._pool.fetchval(
-                "UPDATE alt_slander SET nsfw=$1 WHERE id=$2 AND guild_id=$3",
-                nsfw,
-                user.id,
-                user.guild.id,
-            )
+        # if bool:
+        #     # Overrides the guild config
+        #     is_nsfw = await self._prisma.alt_slander.fetchval(
+        #         "UPDATE alt_slander SET nsfw=$1 WHERE id=$2 AND guild_id=$3",
+        #         nsfw,
+        #         user.id,
+        #         user.guild.id,
+        #     )
 
         else:
             # Fetch the guild config
-            guild_nsfw = await self._pool.fetchval(
-                "SELECT nsfw FROM guild WHERE id=$1", user.guild.id
-            )
+            guild_nsfw = await self._prisma.guild.find_first(where={"id": user.guild.id}, include={"nsfw": True})
 
     async def register_new_slander_target(
         self,
@@ -615,7 +598,7 @@ class SlanderManager:
     ) -> bool:
         # Check if the target will be global
         query = "SELECT * FROM slander_targets WHERE id = $1"
-        res: list[asyncpg.Record] = await self._pool.fetch(query, user.id)
+        res: list[models.SlanderTarget] = await self._prisma.slandertarget.find_first(where={"id": user.id})
 
         if len(res) > 0:
             pre_existing = [SlanderTarget.construct(data) for data in res]

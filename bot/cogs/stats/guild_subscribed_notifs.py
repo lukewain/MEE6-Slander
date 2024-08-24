@@ -10,7 +10,10 @@ from discord.utils import utcnow
 
 from json import load
 
-import asyncpg
+from prisma import Prisma
+
+# ! Work in progress
+# ! This will be a set of commands where a guild owner/administrator can sign up to recieve
 
 class SubscriptionCommands(Stats):
     # The task which will check the total_slanders file to see if a milestone has been reached
@@ -30,10 +33,9 @@ class SubscriptionCommands(Stats):
             self.slander_cache = data['total']
 
             if self.slander_cache % 1000 == 0:
-                self.conn = await asyncpg.connect(dsn=self.bot.dsn)
                 guilds = await self.conn.execute(f"SELECT * IN settings WHERE milestone=TRUE AND channel_id IS NOT null")
 
                 for guild in guilds:
-
+                    ...
         
         

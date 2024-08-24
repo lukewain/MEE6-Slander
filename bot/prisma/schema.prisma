@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guild {
+  id BigInt @unique
+  added BigInt
+  nsfw Boolean @default(true)
+  alert_cid BigInt?
+}
+
+model Admin {
+  id BigInt @unique
+  added BigInt
+  add_others Boolean @default(false)
+  added_by BigInt
+}
+
+model Slander {
+  id Int @id @default(autoincrement())
+  message String @unique
+  creator BigInt
+  nsfw Boolean @default(true)
+  approved Boolean
+  notified Boolean @default(false)
+}
+
+model SlanderLog {
+  id Int @id @default(autoincrement())
+  message String
+  gid BigInt
+  cid BigInt
+  sent BigInt // Timestamp (but no DateTime)
+}
+
+model BlackList {
+  id BigInt @unique
+  added_by BigInt
+  reason String
+  added_at DateTime
+}
+
+model SlanderTarget {
+  id BigInt @unique
+  guild_id BigInt
+  is_global Boolean
+  bot Boolean
+  nsfw Boolean
+}
+

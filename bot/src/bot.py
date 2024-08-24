@@ -9,7 +9,7 @@ from discord import DiscordException, Intents, AllowedMentions, Status, Game
 from discord.utils import setup_logging
 
 import time
-import asyncpg
+from prisma import Prisma
 import logging
 
 import utils
@@ -24,7 +24,7 @@ class MEE6Slander(Bot):
     def __init__(
         self,
         *,
-        pool: asyncpg.Pool[asyncpg.Record],
+        prisma: Prisma,
         slander_manager: utils.SlanderManager,
         aiosession: aiohttp.ClientSession,
         config: utils.Config,
@@ -65,7 +65,7 @@ class MEE6Slander(Bot):
         self.support_link: str = "https://discord.gg/EQpxMZSFy3"
         self.show_support_link: bool = config.show_support_link
 
-        self.pool: asyncpg.Pool[asyncpg.Record] = pool
+        self.prisma: Prisma = prisma
         self.slander_manager: utils.SlanderManager = slander_manager
         self._session: aiohttp.ClientSession = aiosession
 
